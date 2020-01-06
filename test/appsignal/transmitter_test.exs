@@ -14,18 +14,31 @@ defmodule Appsignal.TransmitterTest do
 
   test "uses the default CA certificate" do
     path = Config.ca_file_path()
+    hostname_match_fun = :public_key.pkix_verify_hostname_match_fun(:https)
 
     assert [
              _method,
              _url,
              _headers,
              _body,
-             [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
+             [
+               ssl_options: [
+                 verify: :verify_peer,
+                 cacertfile: ^path,
+                 depth: 2,
+                 customize_hostname_check: [
+                   match_fun: ^hostname_match_fun
+                 ],
+                 ciphers: _,
+                 honor_cipher_order: :undefined
+               ]
+             ]
            ] = Transmitter.request(:get, "https://example.com")
   end
 
   test "uses the configured CA certificate" do
     path = "priv/cacert.pem"
+    hostname_match_fun = :public_key.pkix_verify_hostname_match_fun(:https)
 
     with_config(%{ca_file_path: path}, fn ->
       assert [
@@ -33,7 +46,18 @@ defmodule Appsignal.TransmitterTest do
                _url,
                _headers,
                _body,
-               [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
+               [
+                 ssl_options: [
+                   verify: :verify_peer,
+                   cacertfile: ^path,
+                   depth: 2,
+                   customize_hostname_check: [
+                     match_fun: ^hostname_match_fun
+                   ],
+                   ciphers: _,
+                   honor_cipher_order: :undefined
+                 ]
+               ]
              ] = Transmitter.request(:get, "https://example.com")
     end)
   end

@@ -190,7 +190,12 @@ defmodule Mix.Appsignal.Helper do
   defp download_options do
     options = [
       ssl_options: [
+        verify: :verify_peer,
         cacertfile: priv_path("cacert.pem"),
+        depth: 2,
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ],
         ciphers: ciphers(),
         honor_cipher_order: :undefined
       ]
